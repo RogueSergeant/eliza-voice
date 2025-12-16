@@ -1,3 +1,4 @@
+import argparse
 import logging
 import random
 import re
@@ -225,11 +226,53 @@ class Eliza:
 
         print(self.final())
 
+    def run_voice(self):
+        """Run ELIZA with voice interaction."""
+        from voice import VoiceInterface
+
+        voice = VoiceInterface()
+
+        # Speak initial greeting
+        initial = self.initial()
+        print(f"ELIZA: {initial}")
+        voice.speak(initial)
+
+        while True:
+            # Listen for user input
+            text = voice.listen_and_transcribe()
+            if not text:
+                continue
+
+            print(f"You: {text}")
+
+            # Get ELIZA's response
+            output = self.respond(text)
+            if output is None:
+                break
+
+            print(f"ELIZA: {output}")
+            voice.speak(output)
+
+        # Speak final message
+        final = self.final()
+        print(f"ELIZA: {final}")
+        voice.speak(final)
+
 
 def main():
+    parser = argparse.ArgumentParser(description="ELIZA chatbot")
+    parser.add_argument("--voice", action="store_true",
+                        help="Enable voice interaction mode")
+    args = parser.parse_args()
+
     eliza = Eliza()
     eliza.load('doctor.txt')
-    eliza.run()
+
+    if args.voice:
+        eliza.run_voice()
+    else:
+        eliza.run()
+
 
 if __name__ == '__main__':
     logging.basicConfig()

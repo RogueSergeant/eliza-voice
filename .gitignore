@@ -1,2 +1,18 @@
 .vscode
 __pycache__
+*.pyc
+
+# Virtual environment
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Generated audio files
+*.wav
+
+# Model caches (large files)
+.cache/
+*.onnx
+*.pt
