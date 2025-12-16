@@ -170,7 +170,9 @@ class Eliza:
         return None
 
     def respond(self, text):
-        if text.lower() in self.quits:
+        # Check for quit words (strip punctuation for voice input)
+        text_clean = text.lower().strip().rstrip('.,!?')
+        if text_clean in self.quits:
             return None
 
         text = re.sub(r'\s*\.+\s*', ' . ', text)

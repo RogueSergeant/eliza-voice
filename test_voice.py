@@ -225,6 +225,12 @@ class TestSilenceDetection(unittest.TestCase):
         self.assertIsInstance(SILENCE_THRESHOLD, (int, float))
         self.assertGreater(SILENCE_THRESHOLD, 0)
 
+    def test_speech_threshold_constant(self):
+        """Test that speech threshold is defined and greater than silence threshold."""
+        from voice import SILENCE_THRESHOLD, SPEECH_THRESHOLD
+        self.assertIsInstance(SPEECH_THRESHOLD, (int, float))
+        self.assertGreater(SPEECH_THRESHOLD, SILENCE_THRESHOLD)
+
     def test_silence_duration_constant(self):
         """Test that silence duration is defined."""
         from voice import SILENCE_DURATION
@@ -255,6 +261,12 @@ class TestAudioConstants(unittest.TestCase):
         from voice import MAX_RECORDING_DURATION
         self.assertGreaterEqual(MAX_RECORDING_DURATION, 10)
         self.assertLessEqual(MAX_RECORDING_DURATION, 120)
+
+    def test_min_recording_duration(self):
+        """Test min recording duration is set."""
+        from voice import MIN_RECORDING_DURATION
+        self.assertGreater(MIN_RECORDING_DURATION, 0)
+        self.assertLess(MIN_RECORDING_DURATION, 5)
 
 
 class TestElizaVoiceIntegration(unittest.TestCase):

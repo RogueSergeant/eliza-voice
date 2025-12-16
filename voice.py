@@ -15,9 +15,11 @@ log = logging.getLogger(__name__)
 SAMPLE_RATE = 16000  # Whisper expects 16kHz
 CHANNELS = 1
 DTYPE = np.int16
-SILENCE_THRESHOLD = 500  # RMS threshold for silence detection
-SILENCE_DURATION = 1.5  # Seconds of silence to stop recording
-MAX_RECORDING_DURATION = 30  # Maximum recording length in seconds
+SILENCE_THRESHOLD = 200  # RMS threshold for silence detection (lower = quieter required)
+SPEECH_THRESHOLD = 400  # RMS threshold for speech detection (must exceed to count as speaking)
+SILENCE_DURATION = 3.0  # Seconds of silence to stop recording (after speech detected)
+MIN_RECORDING_DURATION = 0.5  # Minimum recording time before silence detection
+MAX_RECORDING_DURATION = 60  # Maximum recording length in seconds
 
 
 class VoiceInterface:
@@ -82,8 +84,10 @@ class VoiceInterface:
 
         frames = []
         silence_frames = 0
+        speech_detected = False
         frames_per_check = int(SAMPLE_RATE * 0.1)  # Check every 100ms
         silence_frames_needed = int(SILENCE_DURATION / 0.1)
+        min_frames = int(MIN_RECORDING_DURATION / 0.1)
         max_frames = int(MAX_RECORDING_DURATION / 0.1)
 
         def callback(indata, frame_count, time_info, status):
@@ -100,17 +104,23 @@ class VoiceInterface:
                 frame_count += 1
 
                 if len(frames) > 0:
-                    # Check if recent audio is silence
+                    # Check audio level
                     recent = frames[-1]
                     rms = np.sqrt(np.mean(recent.astype(np.float32) ** 2))
 
-                    if rms < SILENCE_THRESHOLD:
+                    # Detect if user has started speaking
+                    if rms > SPEECH_THRESHOLD:
+                        speech_detected = True
+                        silence_frames = 0
+                    elif rms < SILENCE_THRESHOLD:
                         silence_frames += 1
-                        if silence_frames >= silence_frames_needed and len(frames) > silence_frames_needed:
+                        # Only stop after speech detected, min time, and enough silence
+                        if speech_detected and silence_frames >= silence_frames_needed and len(frames) > min_frames:
                             log.debug(f"Silence detected after {len(frames)} frames")
                             break
                     else:
-                        silence_frames = 0
+                        # In between thresholds - don't count as silence
+                        silence_frames = max(0, silence_frames - 1)
 
         if not frames:
             return np.array([], dtype=DTYPE)
